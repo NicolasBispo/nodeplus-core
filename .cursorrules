@@ -1,0 +1,27 @@
+# NodePlus Framework - Cursor Rules
+
+## Package Manager
+- SEMPRE use YARN, nunca npm
+- Use `yarn add`, `yarn install`, `yarn dev`, `yarn build`
+- NUNCA use npm ou npx
+
+## Estrutura do Projeto
+- Core: `packages/nodeplus-core/`
+- Template: `packages/framework-template/`
+- Sempre trabalhe no contexto do monorepo
+
+## Comandos Comuns
+- Build core: `cd packages/nodeplus-core && yarn build`
+- Dev template: `cd packages/framework-template && yarn dev`
+- Install dependencies: `yarn install`
+
+## Padrões de Código
+- Use TypeScript/TSX
+- Mantenha a estrutura MVC
+- Controllers devem ser simples e limpos
+- Hydration deve ser automática, não manual
+
+## Lembre-se
+- SEMPRE use YARN
+- Hydration automática no core
+- Controllers limpos sem configuração manual 

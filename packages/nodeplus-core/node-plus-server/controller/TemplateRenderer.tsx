@@ -17,10 +17,11 @@ export class TemplateRenderer {
   static async renderToStream(
     Component: React.ComponentType<any>, 
     componentProps?: any, 
-    seoProperties?: SEOProperties
+    seoProperties?: SEOProperties,
+    componentName?: string
   ): Promise<Readable> {
-    const componentName = Component.name || 'Component';
-    console.log(`🔄 [TemplateRenderer] Renderizando componente: ${componentName}`);
+    const detectedComponentName = componentName || Component.name || 'Component';
+    console.log(`🔄 [TemplateRenderer] Renderizando componente: ${detectedComponentName}`);
     
     return new Promise((resolve, reject) => {
       let didError = false;
@@ -32,12 +33,21 @@ export class TemplateRenderer {
             // Criar um PassThrough stream para combinar template e conteúdo React
             const outputStream = new PassThrough();
             
-            // Criar o HTML completo dinamicamente
-            const html = TemplateRenderer.createCompleteHTML(componentProps, componentName, seoProperties);
+            // Criar o HTML base sem o conteúdo React
+            const baseHtml = TemplateRenderer.createCompleteHTML(componentProps, detectedComponentName, seoProperties, '');
             
-            // Enviar o HTML completo
-            outputStream.write(html);
-            outputStream.end();
+            // Enviar o HTML base até a div root
+            const beforeRoot = baseHtml.split('<div id="root">')[0] + '<div id="root">';
+            outputStream.write(beforeRoot);
+            
+            // Pipe o conteúdo React para dentro da div
+            pipe(outputStream);
+            
+            // Fechar a div e adicionar o resto do HTML
+            outputStream.write('</div>');
+            const afterRoot = baseHtml.split('</div>')[1];
+            outputStream.write(afterRoot);
+            
             resolve(outputStream);
           },
           onError(error: unknown) {
@@ -46,7 +56,7 @@ export class TemplateRenderer {
             reject(error instanceof Error ? error : new Error(String(error)));
           },
           onAllReady() {
-            console.log(`✅ [TemplateRenderer] Componente ${componentName} renderizado com sucesso`);
+            console.log(`✅ [TemplateRenderer] Componente ${detectedComponentName} renderizado com sucesso`);
           }
         }
       );
@@ -63,17 +73,18 @@ export class TemplateRenderer {
   static async render(
     Component: React.ComponentType<any>, 
     seoProperties?: SEOProperties, 
-    componentProps?: any
+    componentProps?: any,
+    componentName?: string
   ): Promise<string> {
-    const componentName = Component.name || 'Component';
-    console.log(`🔄 [TemplateRenderer] Renderizando componente: ${componentName}`);
+    const detectedComponentName = componentName || Component.name || 'Component';
+    console.log(`🔄 [TemplateRenderer] Renderizando componente: ${detectedComponentName}`);
     
     // Para renderização síncrona, vamos usar renderToString como fallback
     const { renderToString } = await import('react-dom/server');
     const html = renderToString(React.createElement(Component, componentProps));
     
     // Criar o HTML completo dinamicamente
-    const result = TemplateRenderer.createCompleteHTML(componentProps, componentName, seoProperties, html);
+    const result = TemplateRenderer.createCompleteHTML(componentProps, detectedComponentName, seoProperties, html);
 
     return result;
   }
@@ -87,6 +98,9 @@ export class TemplateRenderer {
     // Serializar props para hydration
     const serializedProps = componentProps ? JSON.stringify(componentProps) : 'null';
     
+    // Detectar nome do componente automaticamente se não fornecido
+    const detectedComponentName = componentName || 'Component';
+    
     // Criar o HTML base
     let html = `<!DOCTYPE html>
 <html lang="en">
@@ -99,14 +113,18 @@ export class TemplateRenderer {
     <script type="importmap">
     {
       "imports": {
-        "react": "https://esm.sh/react@18.3.1",
-        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+        "react": "https://esm.sh/react@19.1.0",
+        "react-dom/client": "https://esm.sh/react-dom@19.1.0/client",
+        "react/jsx-dev-runtime": "https://esm.sh/react@19.1.0/jsx-dev-runtime",
+        "react/jsx-runtime": "https://esm.sh/react@19.1.0/jsx-runtime"
       }
     }
     </script>
     <script>
-      window.__INITIAL_PROPS__ = ${serializedProps};
-      window.__COMPONENT_NAME__ = "${componentName || 'Component'}";
+      window.__HYDRATION_DATA__ = {
+        componentName: "${detectedComponentName}",
+        props: ${serializedProps}
+      };
     </script>`;
 
     // Adicionar meta tags SEO se especificadas
@@ -150,7 +168,7 @@ export class TemplateRenderer {
     // Fechar div e adicionar script de hydration
     html += `
     </div>
-    <script type="module" src="/src/scripts/hydrate.tsx"></script>
+    <script type="module" src="/scripts/hydration"></script>
   </body>
 </html>`;
 

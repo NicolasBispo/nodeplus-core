@@ -1,9 +1,10 @@
-// main.tsx
 import React from 'react'
 import { hydrateRoot } from 'react-dom/client'
 
-const props = (window as any).__INITIAL_PROPS__ || {}
-const componentName = (window as any).__COMPONENT_NAME__ || ''
+interface HydrationData {
+  props?: any
+  componentName?: string
+}
 
 // Wrapper component to ensure proper React context
 function HydrationWrapper({ Component, componentProps }: { Component: React.ComponentType<any>, componentProps: any }) {
@@ -11,13 +12,18 @@ function HydrationWrapper({ Component, componentProps }: { Component: React.Comp
 }
 
 async function hydrate() {
+  // Get hydration data from window object
+  const hydrationData: HydrationData = (window as any).__HYDRATION_DATA__ || {}
+  const { props = {}, componentName = '' } = hydrationData
+
   if (!componentName) {
-    console.error('[Hydration] Component name is empty')
+    console.error('[NodePlus Hydration] Component name is empty')
     return
   }
   
   try {
     // Import the component module using dynamic import
+    // This assumes components are in the app/pages directory
     const module = await import(`../app/pages/${componentName}.tsx`)
     const Component = module.default
     
@@ -36,13 +42,13 @@ async function hydrate() {
     const element = React.createElement(HydrationWrapper, { Component, componentProps: props })
     hydrateRoot(rootElement, element)
     
-    console.log(`✅ [Hydration] Component ${componentName} hydrated successfully`)
+    console.log(`✅ [NodePlus Hydration] Component ${componentName} hydrated successfully`)
   } catch (error) {
-    console.error(`[Hydration] Erro ao carregar componente ${componentName}:`, error)
+    console.error(`[NodePlus Hydration] Error loading component ${componentName}:`, error)
   }
 }
 
 // Start hydration
 hydrate().catch(err => {
-  console.error('[Hydration] Erro ao carregar componente:', err)
-})
+  console.error('[NodePlus Hydration] Error during hydration:', err)
+}) 

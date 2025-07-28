@@ -13,3 +13,6 @@ export {nodePaths, NodePlusPath} from './config/Path';
 
 // Router exports
 export * from './router/Router';
+
+// Hydration system exports
+export * from './hydration';

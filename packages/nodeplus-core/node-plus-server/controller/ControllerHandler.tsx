@@ -44,10 +44,14 @@ export function controllerHandler(
         
         try {
           const props = result.props && typeof result.props === 'object' ? result.props : {};
+          const componentType = result.type as React.ComponentType<any>;
+          const componentName = componentType.name || componentType.displayName || 'Component';
+          
           const stream = await TemplateRenderer.renderToStream(
-            result.type as React.ComponentType<any>, 
+            componentType, 
             { ...props, initialData: props }, 
-            (controller as any).seoProperties
+            (controller as any).seoProperties,
+            componentName
           );
             console.log('renderizando como stream')
           return stream.pipe(res);
@@ -55,10 +59,14 @@ export function controllerHandler(
           console.error('Erro no streaming, fallback para render síncrono:', error);
           // Fallback para renderização síncrona
           const props = result.props && typeof result.props === 'object' ? result.props : {};
+          const componentType = result.type as React.ComponentType<any>;
+          const componentName = componentType.name || componentType.displayName || 'Component';
+          
           const html = await TemplateRenderer.render(
-            result.type as React.ComponentType<any>, 
+            componentType, 
             (controller as any).seoProperties, 
-            { ...props, initialData: props }
+            { ...props, initialData: props },
+            componentName
           );
           return res.send(html);
         }

@@ -8,13 +8,13 @@
   "dependencies": {
     "@swc/core": "^1.13.2",
     "nodeplus-core": "*",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "reflect-metadata": "^0.2.2",
     "vite": "^7.0.6"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.1.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }
